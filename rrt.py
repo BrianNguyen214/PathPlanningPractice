@@ -159,6 +159,7 @@ def main():
                             print('initiale point set: '+str(e.pos))
 
                             initialPoint = Node(e.pos, None)
+                            print(initialPoint)
                             nodes.append(initialPoint) # Start in the center
                             initPoseSet = True
                             pygame.draw.circle(screen, red, initialPoint.point, GOAL_RADIUS)

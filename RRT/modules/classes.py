@@ -10,19 +10,30 @@ class Square(pg.sprite.Sprite):
     def __init__(self, color, pos):
         pg.sprite.Sprite.__init__(self)
 
-        self.squImage = pg.Surface((SQU_SIDE_LEN, SQU_SIDE_LEN))
+        # image and rect are required members that the Sprite object must have
+
+        self.image = pg.Surface((SQU_SIDE_LEN, SQU_SIDE_LEN))
         # .get_rect returns the area of the rectangle, or essentially
         # creates a rect with the same of the image/pg.Surface and
         # set's it's topleft coordinate to the pos 
-        self.rectArea = self.squImage.get_rect(topleft=pos)
-        self.squImage.fill(color)
+        self.rect = self.image.get_rect(topleft=pos)
+        self.image.fill(color)
 
 class SurfSprite(pg.sprite.Sprite):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.ssImage = pg.surface.Surface((WIDTH, HEIGHT))
-        self.rect = self.ssImage.get_rect()
+        self.image = pg.surface.Surface((WIDTH, HEIGHT))
+        self.rect = self.image.get_rect()
 
         # .set_colorkey sets the transparent colorkey
-        self.ssImage.set_colorkey(BG_COLOR)
-        self.ssImage.fill(BG_COLOR)
+        self.image.set_colorkey(BG_COLOR)
+        self.image.fill(BG_COLOR)
+
+class Vertex:
+    def __init__(self, pos, parent):
+        self.pos = pos
+        self.parent = parent
+        if parent:
+            self.depth = parent.depth + 1
+        else:
+            self.depth = 0

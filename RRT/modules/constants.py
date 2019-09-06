@@ -12,4 +12,7 @@ HEIGHT = 650
 
 BG_COLOR = (0,0,0)
 
+OBS_COLOR = (55,123, 230)
+OBS_WIDTH = (10)
+
 CAPTION = 'RRT Algo Implementation'

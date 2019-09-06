@@ -19,9 +19,6 @@ import sys
 
 pg.init()
 
-def dist(p1, p2):
-  return hypot(p2[0]-p1[0], p2[1]-p1[1])
-
 class Application:
     def __init__(self):
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -138,7 +135,7 @@ class Application:
         # these are variables to keep track of some info about the path and the 
         # the run time of the algo
         treeHeight = 0
-        linDist = dist(self.beginSquare.rect.center, self.goalSquare.rect.center)
+        linDist = self.calcDist(self.beginSquare.rect.center, self.goalSquare.rect.center)
         startTime = perf_counter()
 
         showInfo = True
@@ -176,7 +173,7 @@ class Application:
 
     # p1 and p2 are going to be arrays that store the coordinate points
     # of the nodes
-    def calcDist(p1, p2):
+    def calcDist(self, p1, p2):
         return hypot(p2[0]-p1[0], p2[1]-p1[1])
 
     def findNearestVert(self, newRandPtCoord):
@@ -189,4 +186,36 @@ class Application:
                 nearestVert = i
         print("The final closest dist is" + str(closestDist))
     def show_info(self, elapsed_time, height, nvertices, lin_dist, path_dist = None, path_len = None):
-            print('showing the info')
+        timeStr = "Elapsed time: %f s " % elapsed_time
+        heightStr = "Tree's height: %d " % height
+        verticesStr = "Vertices %d " % nvertices
+        linDistStr = "Linear Distances: %f " % lin_dist
+
+        # .render() takes in text/string, antialias, color, and background color
+        timeSurf = FONT.render(timeStr, 0, TEXT_COLOR, BG_COLOR)
+        heightSurf = FONT.render(heightStr, 0, TEXT_COLOR, BG_COLOR)
+        verticesSurf = FONT.render(verticesStr, 0, TEXT_COLOR, BG_COLOR)
+        linDistSurf = FONT.render(linDistStr, 0, TEXT_COLOR, BG_COLOR)
+
+        # there's no way to directly draw text on a surface; thus you must
+        # use Font.render() to create an image/surface of the text, and then blit the 
+        # image onto the surface you want
+
+        # here is where we blit the images of the text
+        rect1 = self.screen.blit(timeSurf, (TEXT_X, TEXT_Y))
+        rect2 = self.screen.blit(heightSurf, (TEXT_X, TEXT_Y + TEXT_PADDING))
+        rect3 = self.screen.blit(verticesSurf, (TEXT_X, TEXT_Y + 2*TEXT_PADDING))
+        rect4 = self.screen.blit(linDistSurf, (TEXT_X, TEXT_Y + 3*TEXT_PADDING))
+
+        rectsUpdate = [rect1, rect2, rect3, rect4]
+
+        if self.state == 'path_found':
+            pathDistStr = "Path distance: %f " % path_dist
+            pathDistSurf = FONT.render(pathDistStr, 0, TEXT_COLOR, (0,0,0))
+            rect5 = self.screen.blit(pathDistSurf, (TEXT_X, TEXT_Y + 4*TEXT_PADDING))
+            pathLenStr = "  Path length: %d  " % path_len 
+            pathLenSurf = FONT.render(pathLenStr, 0, TEXT_COLOR, (0,0,0))
+            rect6 = self.screen.blit(pathLenSurf, (TEXT_X, TEXT_Y + 5*TEXT_PADDING))
+            rectsUpdate += [rect5, rect6]
+
+        pg.display.update(rectsUpdate)

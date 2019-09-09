@@ -1,5 +1,5 @@
 import pygame as pg
-
+import time
 # perf_counter returns a float that represents the time in seconds
 # we'll use it to record the run time of the algorithm
 from time import perf_counter
@@ -7,8 +7,8 @@ from time import perf_counter
 # this allows you to generate a random number from a specified range
 from random import randrange as rand
 
-# turns out there's a math function to return the hypotenuse if you give it
-# two coordinate points
+# turns out there's a math function to calculate the hypotenuse of two 
+# coordinate points
 from math import hypot
 
 # we'll make use of the classes and the constants defined in 
@@ -95,7 +95,8 @@ class Application:
                         elif self.state == 'goal_drag':
                             self.goalSquare.rect.center = e.pos
                         elif self.state == 'drawing':   
-                            # .draw.line takes a surface, a color, a start position, an end position, and the width of the line
+                            # .draw.line takes a surface (in this case we pass it the object surface because we want to build the obstacles on to the 
+                            # the obstacle surface), a color, a start position, an end position, and the width of the line
                             pg.draw.line(self.obsSurf.image, OBS_COLOR, (e.pos[0]-e.rel[0], e.pos[1]-e.rel[1]), e.pos, OBS_WIDTH)
                     elif e.buttons[2]: # the right mouse button is being held down
                         if self.state == 'erasing':
@@ -168,7 +169,54 @@ class Application:
 
             if showInfo:
                 self.show_info(perf_counter() - startTime, treeHeight, len(self.vertices), linDist)
-                    
+            
+            newVert = (rand(WIDTH), rand(HEIGHT))
+
+            nearestVert = self.findNearestVert(newVert)
+
+            # attempting to create the edge between the nearest vertex and the new vertex
+            test_rect = pg.draw.line(self.test_surf.image, EDGE_COLOR, nearestVert.pos, newVert)
+            
+            # checking to see if there's a mask collision between the test surface and the obstacles surface
+            # this is a nice way to see if two masks of two surfaces are overlapping
+            collide = pg.sprite.collide_mask(self.test_surf, self.obsSurf)
+
+            # clear the test surface; we reuse the test surface in order to test out collisions
+            # filling the test surface with the background color and overlay it with 
+            # the text rectangle
+            self.test_surf.image.fill(BG_COLOR, test_rect)
+
+            # if there are no collisions 
+            if not collide:
+                print('no collision')
+                newAddedVert = cl.Vertex(newVert, nearestVert)
+                self.vertices.append(newAddedVert)
+
+                # see if the new vertex increases the height of the tree 
+                if newAddedVert.depth > treeHeight:
+                    treeHeight = newAddedVert.depth
+
+                # here is where we actually draw on the tree surface since
+                # the collision test passed
+                pg.draw.circle(self.tree_surf, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
+                pg.draw.line(self.tree_surf, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
+                print('drawings')
+                # we need to make sure that we actually draw on the main screen/ surface too
+                vert = pg.draw.circle(self.screen, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
+                edge = pg.draw.line(self.screen, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
+
+                pg.display.update([vert, edge])
+
+                # if the newly added vertex is inside of the goal rectangle, then we are done
+                if self.goalSquare.rect.collidepoint(newAddedVert.pos):
+                    done = True
+
+        duration = perf_counter() - startTime
+        self.state = 'path_found'
+        print(self.state)
+        
+        # getting the number of edges and the total distance of the path that was found
+        # numEdges, pathDist = self.paint_path(newAddedVert)
         return 'quit'
 
     # p1 and p2 are going to be arrays that store the coordinate points
@@ -177,14 +225,15 @@ class Application:
         return hypot(p2[0]-p1[0], p2[1]-p1[1])
 
     def findNearestVert(self, newRandPtCoord):
-        closestDist = sys.maxint
+        closestDist = float("inf")
         nearestVert = self.vertices[0]
         for i in self.vertices:
-            dist = calcDist(i, newRandPtCoord)
+            dist = self.calcDist(i.pos, newRandPtCoord)
             if dist < closestDist:
                 closestDist = dist
                 nearestVert = i
-        print("The final closest dist is" + str(closestDist))
+        return nearestVert
+
     def show_info(self, elapsed_time, height, nvertices, lin_dist, path_dist = None, path_len = None):
         timeStr = "Elapsed time: %f s " % elapsed_time
         heightStr = "Tree's height: %d " % height
@@ -219,3 +268,20 @@ class Application:
             rectsUpdate += [rect5, rect6]
 
         pg.display.update(rectsUpdate)
+
+        def paint_path(self, lastVert):
+            currVert = lastVert
+            numVert = 0
+            pathDist = 0
+
+            # starting from the last vertex of the path, we'll traverse backwards
+            # until we reached the beginSquare, the first vertex of the path
+            while currVert.parent:
+                numVert += 1
+                pg.draw.circle(self.tree_surf, PATH_VERTEX_COLOR, currVert.pos, PATH_VERTEX_RADIUS)
+                pg.draw.line(self.tree_surf, PATH_EDGE_COLOR, currVert.pos, currVert.parent.pos)
+                pathDist += dist(currVert.pos, currVert.parent.pos)
+                currVert = currVert.parent
+            # still have to do the very last (well technically the first vertex)
+            pg.draw.circle()
+

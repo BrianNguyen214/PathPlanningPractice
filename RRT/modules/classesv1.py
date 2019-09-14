@@ -33,7 +33,6 @@ class Vertex:
     def __init__(self, pos, parent):
         self.pos = pos
         self.parent = parent
-        self.distFromBegin = 0
         if parent:
             self.depth = parent.depth + 1
         else:

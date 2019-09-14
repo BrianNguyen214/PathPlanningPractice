@@ -57,7 +57,7 @@ class Application:
         # besides this, the self.state variable is used to carry out certain actions
         # depending on what the current state is
         self.state = 'normal'
-        # print(self.state)
+        print(self.state)
         self.screen.fill(BG_COLOR)
 
         self.appLoop()
@@ -82,10 +82,10 @@ class Application:
                             self.state = 'drawing'
                     elif e.button == 3: # right button is clicked
                         self.state = 'erasing'
-                    # print(self.state)
+                    print(self.state)
                 elif e.type == pg.MOUSEBUTTONUP:
                     self.state = 'normal'
-                    # print(self.state)
+                    print(self.state)
                 elif e.type == pg.MOUSEMOTION: # it's pretty interesting that pygame can determine whether your pressing a key or dragging
                     if e.buttons[0]: # the left mouse button is being held down
                         # we're essentially continuously updating the position of the beginSquare and the goalSquare 
@@ -104,11 +104,11 @@ class Application:
                 elif e.type == pg.KEYDOWN:
                     if e.key == pg.K_RETURN:
                         self.state = 'running'
-                        # print(self.state)
+                        print(self.state)
                         if self.runRRT() == 'quit':
                             done = True
                         self.state = 'normal'
-                        # print(self.state)
+                        print(self.state)
             self.screen.fill(BG_COLOR)
             self.sprites.draw(self.screen)
             # .display.flip() updates the full display Surface to the screen
@@ -119,7 +119,6 @@ class Application:
         pg.quit()
 
     def runRRT(self):
-        counter = 0
         # refresh/ clean the tree surface
         self.tree_surf.fill(BG_COLOR)
 
@@ -149,8 +148,6 @@ class Application:
         done = self.goalSquare.rect.collidepoint(self.beginSquare.rect.center)
         
         while not done:
-            # if counter > 3:
-            #     break
             for e in pg.event.get():
                 if e.type == pg.QUIT:
                     return 'quit'
@@ -175,7 +172,7 @@ class Application:
             
             newVert = (rand(WIDTH), rand(HEIGHT))
 
-            nearestVert, distFromClosest = self.findNearestVert(newVert)
+            nearestVert = self.findNearestVert(newVert)
 
             # attempting to create the edge between the nearest vertex and the new vertex
             test_rect = pg.draw.line(self.testSurf.image, EDGE_COLOR, nearestVert.pos, newVert)
@@ -192,7 +189,6 @@ class Application:
             # if there are no collisions 
             if not collide:
                 newAddedVert = cl.Vertex(newVert, nearestVert)
-                newAddedVert.distFromBegin = newAddedVert.parent.distFromBegin + distFromClosest
                 self.vertices.append(newAddedVert)
 
                 # see if the new vertex increases the height of the tree 
@@ -201,29 +197,21 @@ class Application:
 
                 # here is where we actually draw on the tree surface since
                 # the collision test passed
-
-                #######
                 pg.draw.circle(self.tree_surf, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
                 pg.draw.line(self.tree_surf, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
-                #######
-                
                 # we need to make sure that we actually draw on the main screen/ surface too
                 vert = pg.draw.circle(self.screen, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
                 edge = pg.draw.line(self.screen, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
 
                 pg.display.update([vert, edge])
 
-                # this is where we do the rewiring
-                self.rewire(newAddedVert)
-
                 # if the newly added vertex is inside of the goal rectangle, then we are done
                 if self.goalSquare.rect.collidepoint(newAddedVert.pos):
                     done = True
-            counter += 1
 
         duration = perf_counter() - startTime
         self.state = 'path_found'
-        # print(self.state)
+        print(self.state)
         
         # getting the number of edges and the total distance of the path that was found
         numEdges, pathDist = self.paint_path(newAddedVert)
@@ -261,37 +249,7 @@ class Application:
             if dist < closestDist:
                 closestDist = dist
                 nearestVert = i
-        return nearestVert, closestDist
-
-    def rewire(self, givenVert):
-        rewireRadius = 200
-        # RRVert = pg.draw.circle(self.screen, (100, 100, 255), givenVert.pos, rewireRadius, 1)
-        # pg.display.update([RRVert])
-        print()
-        for v in self.vertices:
-            distAway = self.calcDist(givenVert.pos, v.pos)
-            totalDist = distAway + v.distFromBegin
-            passesObsCheck = False
-
-            # here we need to make sure that adding the connection between the nodes
-            # won't pass through an obstacle
-            # so we use the test surface to test the edge
-            
-            test_rect = pg.draw.line(self.testSurf.image, EDGE_COLOR, v.pos, givenVert.pos)
-            collide = pg.sprite.collide_mask(self.testSurf, self.obsSurf)
-            self.testSurf.image.fill(BG_COLOR, test_rect)
-            if collide == None:
-                passesObsCheck = True
-
-            if distAway < rewireRadius and totalDist < givenVert.distFromBegin and passesObsCheck == True:
-                print('successful rewire')
-                oldparent = givenVert.parent
-                givenVert.parent = v
-                givenVert.distFromBegin = givenVert.parent.distFromBegin + distAway
-                removeEdge = pg.draw.line(self.screen, (0, 0, 0), givenVert.pos, oldparent.pos, 3)
-                newEdge = pg.draw.line(self.screen, (255, 255, 255), givenVert.pos, v.pos)
-                pg.display.update([newEdge])
-                pg.display.update([removeEdge])
+        return nearestVert
 
     def show_info(self, elapsed_time, height, nvertices, lin_dist, pathDist = None, numEdges = None):
         timeStr = "Elapsed time: %f s " % elapsed_time

@@ -1,5 +1,6 @@
 {
-    "python.pythonPath": "/usr/bin/python",
+    "python.pythonPath": "C:\\Users\\bnazn\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
     "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": false,
+    "python.linting.pylintArgs": ["--unsafe-load-any-extension=y"]
 }

@@ -48,7 +48,7 @@ class Application:
         self.vertices = None
 
         # surface for testing the collisions
-        self.test_surf = cl.SurfSprite()
+        self.testSurf = cl.SurfSprite()
 
         self.sprites = pg.sprite.Group(self.beginSquare, self.goalSquare, self.obsSurf)
 
@@ -100,7 +100,7 @@ class Application:
                             pg.draw.line(self.obsSurf.image, OBS_COLOR, (e.pos[0]-e.rel[0], e.pos[1]-e.rel[1]), e.pos, OBS_WIDTH)
                     elif e.buttons[2]: # the right mouse button is being held down
                         if self.state == 'erasing':
-                            pg.draw.line(self.obsSurf.image, 0, (e.pos[0]-e.rel[0], e.pos[1]-e.rel[1]), e.pos, OBS_WIDTH)
+                            pg.draw.line(self.obsSurf.image, BG_COLOR, (e.pos[0]-e.rel[0], e.pos[1]-e.rel[1]), e.pos, OBS_WIDTH)
                 elif e.type == pg.KEYDOWN:
                     if e.key == pg.K_RETURN:
                         self.state = 'running'
@@ -175,20 +175,19 @@ class Application:
             nearestVert = self.findNearestVert(newVert)
 
             # attempting to create the edge between the nearest vertex and the new vertex
-            test_rect = pg.draw.line(self.test_surf.image, EDGE_COLOR, nearestVert.pos, newVert)
+            test_rect = pg.draw.line(self.testSurf.image, EDGE_COLOR, nearestVert.pos, newVert)
             
             # checking to see if there's a mask collision between the test surface and the obstacles surface
             # this is a nice way to see if two masks of two surfaces are overlapping
-            collide = pg.sprite.collide_mask(self.test_surf, self.obsSurf)
+            collide = pg.sprite.collide_mask(self.testSurf, self.obsSurf)
 
             # clear the test surface; we reuse the test surface in order to test out collisions
             # filling the test surface with the background color and overlay it with 
             # the text rectangle
-            self.test_surf.image.fill(BG_COLOR, test_rect)
+            self.testSurf.image.fill(BG_COLOR, test_rect)
 
             # if there are no collisions 
             if not collide:
-                print('no collision')
                 newAddedVert = cl.Vertex(newVert, nearestVert)
                 self.vertices.append(newAddedVert)
 
@@ -200,7 +199,6 @@ class Application:
                 # the collision test passed
                 pg.draw.circle(self.tree_surf, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
                 pg.draw.line(self.tree_surf, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
-                print('drawings')
                 # we need to make sure that we actually draw on the main screen/ surface too
                 vert = pg.draw.circle(self.screen, VERTEX_COLOR, newAddedVert.pos, VERTEX_RADIUS)
                 edge = pg.draw.line(self.screen, EDGE_COLOR, nearestVert.pos, newAddedVert.pos)
@@ -216,8 +214,27 @@ class Application:
         print(self.state)
         
         # getting the number of edges and the total distance of the path that was found
-        # numEdges, pathDist = self.paint_path(newAddedVert)
-        return 'quit'
+        numEdges, pathDist = self.paint_path(newAddedVert)
+        showinfo = True
+        self.show_info(duration, treeHeight, len(self.vertices), linDist, pathDist, numEdges)
+        loop = True
+        while loop:
+            for e in pg.event.get():
+                if e.type == pg.QUIT:
+                    return 'quit'
+                elif e.type == pg.KEYDOWN:
+                    # If a key other than 'h' is pressed, ends the function.
+                    if e.key == pg.K_h:
+                        showinfo = not showinfo
+                        if showinfo == False:
+                            self.screen.fill(BG_COLOR)
+                            self.sprites.draw(self.screen)
+                            self.screen.blit(self.tree_surf, (0,0))
+                            pg.display.flip()
+                        else:
+                            self.show_info(duration, treeHeight, len(self.vertices), linDist, pathDist, numEdges)                   
+                    else:
+                        loop = False
 
     # p1 and p2 are going to be arrays that store the coordinate points
     # of the nodes
@@ -234,17 +251,17 @@ class Application:
                 nearestVert = i
         return nearestVert
 
-    def show_info(self, elapsed_time, height, nvertices, lin_dist, path_dist = None, path_len = None):
+    def show_info(self, elapsed_time, height, nvertices, lin_dist, pathDist = None, numEdges = None):
         timeStr = "Elapsed time: %f s " % elapsed_time
         heightStr = "Tree's height: %d " % height
         verticesStr = "Vertices %d " % nvertices
         linDistStr = "Linear Distances: %f " % lin_dist
 
         # .render() takes in text/string, antialias, color, and background color
-        timeSurf = FONT.render(timeStr, 0, TEXT_COLOR, BG_COLOR)
-        heightSurf = FONT.render(heightStr, 0, TEXT_COLOR, BG_COLOR)
-        verticesSurf = FONT.render(verticesStr, 0, TEXT_COLOR, BG_COLOR)
-        linDistSurf = FONT.render(linDistStr, 0, TEXT_COLOR, BG_COLOR)
+        timeSurf = FONT.render(timeStr, 0, TEXT_COLOR, (0,0,0))
+        heightSurf = FONT.render(heightStr, 0, TEXT_COLOR, (0,0,0))
+        verticesSurf = FONT.render(verticesStr, 0, TEXT_COLOR, (0,0,0))
+        linDistSurf = FONT.render(linDistStr, 0, TEXT_COLOR, (0,0,0))
 
         # there's no way to directly draw text on a surface; thus you must
         # use Font.render() to create an image/surface of the text, and then blit the 
@@ -259,29 +276,32 @@ class Application:
         rectsUpdate = [rect1, rect2, rect3, rect4]
 
         if self.state == 'path_found':
-            pathDistStr = "Path distance: %f " % path_dist
+            pathDistStr = "Total distance: %f " % pathDist
             pathDistSurf = FONT.render(pathDistStr, 0, TEXT_COLOR, (0,0,0))
             rect5 = self.screen.blit(pathDistSurf, (TEXT_X, TEXT_Y + 4*TEXT_PADDING))
-            pathLenStr = "  Path length: %d  " % path_len 
+            pathLenStr = "Number of edges: %d " % numEdges 
             pathLenSurf = FONT.render(pathLenStr, 0, TEXT_COLOR, (0,0,0))
             rect6 = self.screen.blit(pathLenSurf, (TEXT_X, TEXT_Y + 5*TEXT_PADDING))
             rectsUpdate += [rect5, rect6]
 
         pg.display.update(rectsUpdate)
 
-        def paint_path(self, lastVert):
-            currVert = lastVert
-            numVert = 0
-            pathDist = 0
+    def paint_path(self, lastVert):
+        currVert = lastVert
+        numVert = 0
+        pathDist = 0
 
-            # starting from the last vertex of the path, we'll traverse backwards
-            # until we reached the beginSquare, the first vertex of the path
-            while currVert.parent:
-                numVert += 1
-                pg.draw.circle(self.tree_surf, PATH_VERTEX_COLOR, currVert.pos, PATH_VERTEX_RADIUS)
-                pg.draw.line(self.tree_surf, PATH_EDGE_COLOR, currVert.pos, currVert.parent.pos)
-                pathDist += dist(currVert.pos, currVert.parent.pos)
-                currVert = currVert.parent
-            # still have to do the very last (well technically the first vertex)
-            pg.draw.circle()
+        # starting from the last vertex of the path, we'll traverse backwards
+        # until we reached the beginSquare, the first vertex of the path
+        while currVert.parent:
+            pg.draw.circle(self.tree_surf, PATH_VERTEX_COLOR, currVert.pos, PATH_VERTEX_RADIUS)
+            pg.draw.line(self.tree_surf, PATH_EDGE_COLOR, currVert.pos, currVert.parent.pos, PATH_EDGE_WIDTH)
+            numVert += 1
+            pathDist += self.calcDist(currVert.pos, currVert.parent.pos)
+            currVert = currVert.parent
+        pg.draw.circle(self.tree_surf, PATH_VERTEX_COLOR, currVert.pos, PATH_VERTEX_RADIUS)
+        self.screen.blit(self.tree_surf, (0,0))
+        pg.display.flip()
+
+        return numVert, pathDist
 

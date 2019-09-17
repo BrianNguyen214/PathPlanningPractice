@@ -108,7 +108,7 @@ def putInVerts():
 
 def rewire(givenVert):
     # 210, 110, 50
-    rewireRadius = 210
+    rewireRadius = 110
 
     # this is for visual purposes only
     RRVert = pg.draw.circle(screen, (100, 100, 255), givenVert.pos, rewireRadius, 1)
@@ -138,7 +138,7 @@ def rewire(givenVert):
             removeEdge = pg.draw.line(screen, (0, 0, 0), givenVert.pos, oldparent.pos, 3)
             print('the new givenVert dist from beginning is ' + str(givenVert.distFromBegin) + '\n')
             newEdge = pg.draw.line(screen, (255, 255, 255), givenVert.pos, v.pos)
-            pg.display.update([newEdge])
-            pg.display.update([removeEdge])
+            # pg.display.update([newEdge])
+            # pg.display.update([removeEdge])
 appLoop()
             

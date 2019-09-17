@@ -15,7 +15,8 @@ BG_COLOR = (0, 0, 0)
 OBS_COLOR = (0, 0, 255)
 OBS_WIDTH = (10)
 
-CAPTION = 'RRT Algo Implementation'
+CAPTION_RRT = 'RRT Algo Implementation'
+CAPTION_RRT_STAR = 'RRT Algo Implementation'
 
 FONT = font.SysFont('Tahoma', 15)
 TEXT_COLOR = (255, 125, 0)

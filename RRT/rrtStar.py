@@ -1,4 +1,4 @@
-from modules import rrtApp as app
+from modules import rrtStarApp as app
 
 if __name__ == '__main__':
     app.Application()

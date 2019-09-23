@@ -106,11 +106,11 @@ while run:
                 pygame.draw.rect(win, (0,0,255), (xCoord, yCoord, 10, 10)) 
 
     #drawing the horizontal lines
-    for i in range(2500/50):
+    for i in range(2500//50):
         pygame.draw.line(win, (0, 0, 0), (0, i*10), (500, i*10))
 
     #drawing the vertical lines
-    for i in range(2500/50):
+    for i in range(2500//50):
         pygame.draw.line(win, (0, 0, 0), (i*10, 0), (i*10, 500))
     
     pygame.draw.rect(win, (255,0,0), (x, y, width, height))   

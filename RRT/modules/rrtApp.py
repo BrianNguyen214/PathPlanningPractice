@@ -44,7 +44,7 @@ class Application:
         self.tree_surf.set_colorkey(BG_COLOR)
         self.tree_surf.fill(BG_COLOR)
 
-        # storing the vertices/nodes of the tree
+        ### remove later
         self.vertices = None
 
         # surface for testing the collisions
@@ -120,6 +120,7 @@ class Application:
 
     def runRRT(self):
         # refresh/ clean the tree surface
+        addFirstNode = False
         self.tree_surf.fill(BG_COLOR)
 
         # .mask.from_surface creates a mask form the surface; it's used for colision detection
@@ -130,8 +131,12 @@ class Application:
         self.obsSurf.mask = pg.mask.from_surface(self.obsSurf.image)
         
         # need to add the first vertex as the beginning point's position
-        newVert = cl.Vertex(self.beginSquare.rect.center, None)
-        self.vertices = [newVert]
+        firstVert = cl.Vertex(self.beginSquare.rect.center, None)
+        
+        ### remove later
+        self.vertices = [firstVert]
+        
+        KDT = cl.KDTree(firstVert)
 
         # these are variables to keep track of some info about the path and the 
         # the run time of the algo
@@ -168,14 +173,18 @@ class Application:
                         pg.display.flip()
 
             if showInfo:
-                self.show_info(perf_counter() - startTime, treeHeight, len(self.vertices), linDist)
+                self.show_info(perf_counter() - startTime, treeHeight, KDT.numNodes, linDist)
             
-            newVert = (rand(WIDTH), rand(HEIGHT))
+            newVertPos = (rand(WIDTH), rand(HEIGHT))
 
-            nearestVert = self.findNearestVert(newVert)
+            ### add back later
+            # nearestVert, distFromClosest = KDT.findClosest(newVertPos)
+
+            ### remove later
+            nearestVert = self.findNearestVert(newVertPos)
 
             # attempting to create the edge between the nearest vertex and the new vertex
-            test_rect = pg.draw.line(self.testSurf.image, EDGE_COLOR, nearestVert.pos, newVert)
+            test_rect = pg.draw.line(self.testSurf.image, EDGE_COLOR, nearestVert.pos, newVertPos)
             
             # checking to see if there's a mask collision between the test surface and the obstacles surface
             # this is a nice way to see if two masks of two surfaces are overlapping
@@ -188,8 +197,10 @@ class Application:
 
             # if there are no collisions 
             if not collide:
-                newAddedVert = cl.Vertex(newVert, nearestVert)
+
+                newAddedVert = cl.Vertex(newVertPos, nearestVert)
                 self.vertices.append(newAddedVert)
+                KDT.addNode(newAddedVert)
 
                 # see if the new vertex increases the height of the tree 
                 if newAddedVert.depth > treeHeight:
@@ -216,7 +227,7 @@ class Application:
         # getting the number of edges and the total distance of the path that was found
         numEdges, pathDist = self.paint_path(newAddedVert)
         showinfo = True
-        self.show_info(duration, treeHeight, len(self.vertices), linDist, pathDist, numEdges)
+        self.show_info(duration, treeHeight, KDT.numNodes, linDist, pathDist, numEdges)
         loop = True
         while loop:
             for e in pg.event.get():

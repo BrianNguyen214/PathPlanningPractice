@@ -74,7 +74,6 @@ class KDTree:
             return 0, closestPt
 
         while tmpNode != None:
-
             # if the currLevel is odd, then we want to place the node
             # based on the first coord
             dist = self.calcDistKDT(givenPt, tmpNode.coords)
@@ -82,26 +81,22 @@ class KDTree:
                 minDist = dist
                 closestPt = tmpNode.coords
 
-            # the case where the tmpNode has two children
-            if tmpNode.left != None and tmpNode.right != None:
-                distL = self.calcDistKDT(givenPt, tmpNode.left.coords)
-                distR = self.calcDistKDT(givenPt, tmpNode.right.coords)
-                if distL < distR and tmpNode.left.coords != givenPt:
+            if currLevel % 2 == 1:
+                if givenPt[0] < tmpNode.coords[0]:
                     tmpNode = tmpNode.left
-                elif distL > distR and tmpNode.right.coords == givenPt:
-                    tmpNode = tmpNode.left
-                elif distR < distL and tmpNode.right.coords != givenPt:
+                    currLevel += 1
+                else:
                     tmpNode = tmpNode.right
-                elif distR > distL and tmpNode.left.coords == givenPt:
-                    tmpNode = tmpNode.right
-            # the case where the tmpNode only has the left child
-            elif tmpNode.left != None and tmpNode.right == None:
-                tmpNode = tmpNode.left
-            # the case where the tmpNode only has the right child
-            elif tmpNode.left == None and tmpNode.right != None:
-                tmpNode = tmpNode.right
+                    currLevel += 1
+            # else, this means that the currLevel is even, so we want to place
+            # the node based on the second coord
             else:
-                break
+                if givenPt[1] < tmpNode.coords[1]:
+                    tmpNode = tmpNode.left
+                    currLevel += 1
+                else:
+                    tmpNode = tmpNode.right
+                    currLevel += 1 
 
         return minDist, closestPt
 
@@ -120,32 +115,6 @@ hardCodedPts = [
     (248, 48),
     (100, 139),
     (389, 147)
-]
-
-hardCodedPts2 = [
-    (266, 275),
-    (278, 292),
-    (490, 376),
-    (10, 220),
-    (84, 125),
-    (129, 66),
-    (450, 10),
-    (168, 46),
-    (331, 67),
-    (15, 13)
-]
-
-hardCodedPts3 = [
-    (293, 29),
-    (170, 412),
-    (446, 24),
-    (421, 148),
-    (2, 320),
-    (373, 484),
-    (269, 326),
-    (130, 356),
-    (349, 460),
-    (449, 359)
 ]
 
 def calcDist(p1, p2):
@@ -179,11 +148,11 @@ def populateRandPts():
             return KDT.findClosest(pt)
 
         # this is where we test to see if the different methods have the same results
-        numTests = 8
+        numTests = 10
         diffArr = []
         for i in range(numTests):
             # newRandPt = (rand(500), rand(500))
-            newRandPt = hardCodedPts3[i]
+            newRandPt = hardCodedPts[i]
             nextNode = KDNode(newRandPt)
             listOfCoords.append(nextNode.coords)
             if i == 0:
@@ -197,24 +166,9 @@ def populateRandPts():
                 print(newRandPt)
                 print(compDist)
                 print(travDist)
-                diffArr.append(abs(compDist[0] - travDist[0]))
+                diffArr.append(compDist[0] - travDist[0])
             compMinDistArr.append(compDist)
             travMinDistArr.append(travDist)
-
-        newRandPt = hardCodedPts3[numTests]
-        nextNode = KDNode(newRandPt)
-        listOfCoords.append(nextNode.coords)
-        KDT.addNode(nextNode)
-        compDist = compareDistWithPt(newRandPt)
-        travDist = travKDTFindMin(newRandPt)
-        compMinDistArr.append(compDist)
-        travMinDistArr.append(travDist)
-        if compDist != travDist:
-            print('There was a difference')
-            print(newRandPt)
-            print(compDist)
-            print(travDist)
-            diffArr.append(abs(compDist[0] - travDist[0]))
 
         # checking here to see if the the algorithms have the same elements/results
         if np.array_equal(compMinDistArr, travMinDistArr):

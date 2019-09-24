@@ -10,8 +10,8 @@ import sys
 pg.init()
 
 class KDNode:
-    def __init__(self, coords):
-        self.coords = coords
+    def __init__(self, pos):
+        self.pos = pos
         self.left = None
         self.right = None
 
@@ -29,7 +29,7 @@ class KDTree:
             # if the currLevel is odd, then we want to place the node
             # based on the first coord
             if currLevel % 2 == 1:
-                if inputNode.coords[0] < tmpNode.coords[0]:
+                if inputNode.pos[0] < tmpNode.pos[0]:
                     if tmpNode.left == None:
                         tmpNode.left = inputNode
                         break
@@ -46,7 +46,7 @@ class KDTree:
             # else, this means that the currLevel is even, so we want to place
             # the node based on the second coord
             else:
-                if inputNode.coords[1] < tmpNode.coords[1]:
+                if inputNode.pos[1] < tmpNode.pos[1]:
                     if tmpNode.left == None:
                         tmpNode.left = inputNode
                         break
@@ -68,39 +68,59 @@ class KDTree:
         tmpNode = self.root
         currLevel = 1
         minDist = float('inf')
-        closestPt = self.root.coords
+        closestPt = self.root.pos
+        closestVert = self.root
+        depth = 0
 
         if self.numNodes == 1:
             return 0, closestPt
 
-        while tmpNode != None:
+        def inOrdTrav(node):
+            nonlocal givenPt
+            nonlocal minDist
+            nonlocal closestPt
+            nonlocal closestVert
+            if node:
+                inOrdTrav(node.left)
+                dist = self.calcDistKDT(givenPt, node.pos)
+                if dist < minDist and givenPt != node.pos:
+                    minDist = dist
+                    closestPt = node.pos
+                    closestVert = node
+                inOrdTrav(node.right)
 
+        while tmpNode != None:
             # if the currLevel is odd, then we want to place the node
             # based on the first coord
-            dist = self.calcDistKDT(givenPt, tmpNode.coords)
-            if dist < minDist and givenPt != tmpNode.coords:
-                minDist = dist
-                closestPt = tmpNode.coords
+            if depth < 4:
+                dist = self.calcDistKDT(givenPt, tmpNode.pos)
+                if dist < minDist and givenPt != tmpNode.pos:
+                    minDist = dist
+                    closestPt = tmpNode.pos
+                    closestVert = tmpNode
 
-            # the case where the tmpNode has two children
-            if tmpNode.left != None and tmpNode.right != None:
-                distL = self.calcDistKDT(givenPt, tmpNode.left.coords)
-                distR = self.calcDistKDT(givenPt, tmpNode.right.coords)
-                if distL < distR and tmpNode.left.coords != givenPt:
-                    tmpNode = tmpNode.left
-                elif distL > distR and tmpNode.right.coords == givenPt:
-                    tmpNode = tmpNode.left
-                elif distR < distL and tmpNode.right.coords != givenPt:
-                    tmpNode = tmpNode.right
-                elif distR > distL and tmpNode.left.coords == givenPt:
-                    tmpNode = tmpNode.right
-            # the case where the tmpNode only has the left child
-            elif tmpNode.left != None and tmpNode.right == None:
-                tmpNode = tmpNode.left
-            # the case where the tmpNode only has the right child
-            elif tmpNode.left == None and tmpNode.right != None:
-                tmpNode = tmpNode.right
+                if currLevel % 2 == 1:
+                    if givenPt[0] < tmpNode.pos[0]:
+                        tmpNode = tmpNode.left
+                        currLevel += 1
+                        depth += 1
+                    else:
+                        tmpNode = tmpNode.right
+                        currLevel += 1
+                        depth += 1
+                # else, this means that the currLevel is even, so we want to place
+                # the node based on the second coord
+                else:
+                    if givenPt[1] < tmpNode.pos[1]:
+                        tmpNode = tmpNode.left
+                        currLevel += 1
+                        depth += 1
+                    else:
+                        tmpNode = tmpNode.right
+                        currLevel += 1 
+                        depth += 1
             else:
+                inOrdTrav(tmpNode)
                 break
 
         return minDist, closestPt
@@ -120,32 +140,6 @@ hardCodedPts = [
     (248, 48),
     (100, 139),
     (389, 147)
-]
-
-hardCodedPts2 = [
-    (266, 275),
-    (278, 292),
-    (490, 376),
-    (10, 220),
-    (84, 125),
-    (129, 66),
-    (450, 10),
-    (168, 46),
-    (331, 67),
-    (15, 13)
-]
-
-hardCodedPts3 = [
-    (293, 29),
-    (170, 412),
-    (446, 24),
-    (421, 148),
-    (2, 320),
-    (373, 484),
-    (269, 326),
-    (130, 356),
-    (349, 460),
-    (449, 359)
 ]
 
 def calcDist(p1, p2):
@@ -179,13 +173,13 @@ def populateRandPts():
             return KDT.findClosest(pt)
 
         # this is where we test to see if the different methods have the same results
-        numTests = 8
+        numTests = 10 #10
         diffArr = []
         for i in range(numTests):
             # newRandPt = (rand(500), rand(500))
-            newRandPt = hardCodedPts3[i]
+            newRandPt = hardCodedPts[i]
             nextNode = KDNode(newRandPt)
-            listOfCoords.append(nextNode.coords)
+            listOfCoords.append(nextNode.pos)
             if i == 0:
                 KDT = KDTree(nextNode)
             else:
@@ -200,21 +194,14 @@ def populateRandPts():
                 diffArr.append(abs(compDist[0] - travDist[0]))
             compMinDistArr.append(compDist)
             travMinDistArr.append(travDist)
+        
+        # newRandPt = hardCodedPts[-1]
+        # nextNode = KDNode(newRandPt)
+        # listOfCoords.append(nextNode.pos)
+        # KDT.addNode(nextNode)
+        # compDist = compareDistWithPt(newRandPt)
+        # travDist = travKDTFindMin(newRandPt)
 
-        newRandPt = hardCodedPts3[numTests]
-        nextNode = KDNode(newRandPt)
-        listOfCoords.append(nextNode.coords)
-        KDT.addNode(nextNode)
-        compDist = compareDistWithPt(newRandPt)
-        travDist = travKDTFindMin(newRandPt)
-        compMinDistArr.append(compDist)
-        travMinDistArr.append(travDist)
-        if compDist != travDist:
-            print('There was a difference')
-            print(newRandPt)
-            print(compDist)
-            print(travDist)
-            diffArr.append(abs(compDist[0] - travDist[0]))
 
         # checking here to see if the the algorithms have the same elements/results
         if np.array_equal(compMinDistArr, travMinDistArr):
@@ -230,7 +217,7 @@ def populateRandPts():
         for i in range(numTests):
             newRandPt = newRandPtArr[i]
             nextNode = KDNode(newRandPt)
-            listOfCoords.append(nextNode.coords)
+            listOfCoords.append(nextNode.pos)
             if i == 0:
                 KDT = KDTree(nextNode)
             else:
@@ -249,7 +236,7 @@ def populateRandPts():
         for i in range(numTests):
             newRandPt = newRandPtArr[i]
             nextNode = KDNode(newRandPt)
-            listOfCoords.append(nextNode.coords)
+            listOfCoords.append(nextNode.pos)
             if i == 0:
                 KDT = KDTree(nextNode)
             else:
@@ -294,5 +281,4 @@ runApp()
 
 
 
-            
             

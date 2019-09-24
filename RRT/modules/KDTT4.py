@@ -86,13 +86,9 @@ class KDTree:
             if tmpNode.left != None and tmpNode.right != None:
                 distL = self.calcDistKDT(givenPt, tmpNode.left.coords)
                 distR = self.calcDistKDT(givenPt, tmpNode.right.coords)
-                if distL < distR and tmpNode.left.coords != givenPt:
+                if distL < distR or tmpNode.right.coords == givenPt:
                     tmpNode = tmpNode.left
-                elif distL > distR and tmpNode.right.coords == givenPt:
-                    tmpNode = tmpNode.left
-                elif distR < distL and tmpNode.right.coords != givenPt:
-                    tmpNode = tmpNode.right
-                elif distR > distL and tmpNode.left.coords == givenPt:
+                else:
                     tmpNode = tmpNode.right
             # the case where the tmpNode only has the left child
             elif tmpNode.left != None and tmpNode.right == None:
@@ -135,19 +131,6 @@ hardCodedPts2 = [
     (15, 13)
 ]
 
-hardCodedPts3 = [
-    (293, 29),
-    (170, 412),
-    (446, 24),
-    (421, 148),
-    (2, 320),
-    (373, 484),
-    (269, 326),
-    (130, 356),
-    (349, 460),
-    (449, 359)
-]
-
 def calcDist(p1, p2):
     return hypot(p2[0]-p1[0], p2[1]-p1[1])
 
@@ -179,11 +162,11 @@ def populateRandPts():
             return KDT.findClosest(pt)
 
         # this is where we test to see if the different methods have the same results
-        numTests = 8
+        numTests = 10
         diffArr = []
         for i in range(numTests):
             # newRandPt = (rand(500), rand(500))
-            newRandPt = hardCodedPts3[i]
+            newRandPt = hardCodedPts[i]
             nextNode = KDNode(newRandPt)
             listOfCoords.append(nextNode.coords)
             if i == 0:
@@ -201,20 +184,14 @@ def populateRandPts():
             compMinDistArr.append(compDist)
             travMinDistArr.append(travDist)
 
-        newRandPt = hardCodedPts3[numTests]
-        nextNode = KDNode(newRandPt)
-        listOfCoords.append(nextNode.coords)
-        KDT.addNode(nextNode)
-        compDist = compareDistWithPt(newRandPt)
-        travDist = travKDTFindMin(newRandPt)
-        compMinDistArr.append(compDist)
-        travMinDistArr.append(travDist)
-        if compDist != travDist:
-            print('There was a difference')
-            print(newRandPt)
-            print(compDist)
-            print(travDist)
-            diffArr.append(abs(compDist[0] - travDist[0]))
+        # newRandPt = hardCodedPts[-1]
+        # nextNode = KDNode(newRandPt)
+        # listOfCoords.append(nextNode.coords)
+        # KDT.addNode(nextNode)
+        # compDist = compareDistWithPt(newRandPt)
+        # travDist = travKDTFindMin(newRandPt)
+
+
 
         # checking here to see if the the algorithms have the same elements/results
         if np.array_equal(compMinDistArr, travMinDistArr):

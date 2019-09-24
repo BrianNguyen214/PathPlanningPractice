@@ -98,31 +98,49 @@ class KDTree:
         minDist = float('inf')
         closestPt = self.root.pos
         closestVert = self.root
+        depth = 0
+
+        def inOrdTrav(node):
+            nonlocal givenPt
+            nonlocal minDist
+            nonlocal closestPt
+            nonlocal closestVert
+            if node:
+                inOrdTrav(node.left)
+                dist = self.calcDistKDT(givenPt, node.pos)
+                if dist < minDist:
+                    minDist = dist
+                    closestPt = node.pos
+                    closestVert = node
+                inOrdTrav(node.right)
 
         while tmpNode != None:
             # if the currLevel is odd, then we want to place the node
             # based on the first coord
-            dist = self.calcDistKDT(givenPt, tmpNode.pos)
-            if dist < minDist:
-                minDist = dist
-                closestPt = tmpNode.pos
-                closestVert = tmpNode
+            if depth < 4:
+                dist = self.calcDistKDT(givenPt, tmpNode.pos)
+                if dist < minDist:
+                    minDist = dist
+                    closestPt = tmpNode.pos
+                    closestVert = tmpNode
 
-            if currLevel % 2 == 1:
-                if givenPt[0] < tmpNode.pos[0]:
-                    tmpNode = tmpNode.left
-                    currLevel += 1
+                if currLevel % 2 == 1:
+                    if givenPt[0] < tmpNode.pos[0]:
+                        tmpNode = tmpNode.left
+                        currLevel += 1
+                    else:
+                        tmpNode = tmpNode.right
+                        currLevel += 1
+                # else, this means that the currLevel is even, so we want to place
+                # the node based on the second coord
                 else:
-                    tmpNode = tmpNode.right
-                    currLevel += 1
-            # else, this means that the currLevel is even, so we want to place
-            # the node based on the second coord
+                    if givenPt[1] < tmpNode.pos[1]:
+                        tmpNode = tmpNode.left
+                        currLevel += 1
+                    else:
+                        tmpNode = tmpNode.right
+                        currLevel += 1 
             else:
-                if givenPt[1] < tmpNode.pos[1]:
-                    tmpNode = tmpNode.left
-                    currLevel += 1
-                else:
-                    tmpNode = tmpNode.right
-                    currLevel += 1 
+                inOrdTrav(tmpNode)
 
         return closestVert, minDist
